@@ -1,0 +1,39 @@
+{
+  "name": "otis-assistant-pwa",
+  "version": "1.0.0",
+  "description": "OTIS电梯助手小奥 - 现代化PWA应用",
+  "main": "index.html",
+  "scripts": {
+    "dev": "node start-dev.js",
+    "serve": "node local-test.js",
+    "simple": "npx serve . -p 3000",
+    "fix": "node fix-issues.js",
+    "icons": "node generate-icons.js",
+    "kill-port": "node kill-port.js",
+    "clean": "node kill-port.js 3000 && node kill-port.js 3001 && node kill-port.js 3002",
+    "build": "npm run optimize",
+    "optimize": "npm run minify-css && npm run minify-js",
+    "minify-css": "npx cleancss -o styles.min.css styles.css",
+    "minify-js": "npx terser app.js chat-history.js test-functions.js -o app.min.js -c -m",
+    "deploy": "wrangler deploy --assets=.",
+    "deploy-pages": "wrangler pages deploy .",
+    "preview": "wrangler pages dev .",
+    "test": "npm run dev",
+    "start": "npm run dev"
+  },
+  "keywords": [
+    "pwa",
+    "otis",
+    "elevator",
+    "assistant",
+    "chatbot"
+  ],
+  "author": "OTIS Team",
+  "license": "MIT",
+  "devDependencies": {
+    "clean-css-cli": "^5.6.2",
+    "terser": "^5.19.2",
+    "serve": "^14.2.0"
+  },
+  "dependencies": {}
+}

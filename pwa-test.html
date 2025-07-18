@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PWA功能测试 - OTIS助手</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      line-height: 1.6;
+    }
+    .test-item {
+      background: #f5f5f5;
+      padding: 15px;
+      margin: 10px 0;
+      border-radius: 8px;
+      border-left: 4px solid #007AFF;
+    }
+    .status {
+      font-weight: bold;
+      margin-left: 10px;
+    }
+    .success { color: #34C759; }
+    .error { color: #FF3B30; }
+    .warning { color: #FF9500; }
+    button {
+      background: #007AFF;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      margin: 5px;
+    }
+    button:hover {
+      background: #0056CC;
+    }
+    #results {
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🧪 PWA功能测试</h1>
+  <p>这个页面用于测试OTIS助手的PWA功能。</p>
+  
+  <div class="test-item">
+    <h3>Service Worker状态</h3>
+    <div id="sw-status">检查中...</div>
+    <button onclick="checkServiceWorker()">重新检查</button>
+  </div>
+  
+  <div class="test-item">
+    <h3>Manifest文件</h3>
+    <div id="manifest-status">检查中...</div>
+    <button onclick="checkManifest()">重新检查</button>
+  </div>
+  
+  <div class="test-item">
+    <h3>安装提示</h3>
+    <div id="install-status">等待检查...</div>
+    <button onclick="triggerInstall()" id="install-btn" disabled>安装PWA</button>
+  </div>
+  
+  <div class="test-item">
+    <h3>离线功能</h3>
+    <div id="offline-status">在线状态: <span id="online-indicator"></span></div>
+    <button onclick="testOffline()">测试离线功能</button>
+  </div>
+  
+  <div class="test-item">
+    <h3>缓存状态</h3>
+    <div id="cache-status">检查中...</div>
+    <button onclick="checkCache()">检查缓存</button>
+    <button onclick="clearCache()">清除缓存</button>
+  </div>
+  
+  <div id="results"></div>
+  
+  <script>
+    let deferredPrompt;
+    
+    // 检查在线状态
+    function updateOnlineStatus() {
+      const indicator = document.getElementById('online-indicator');
+      if (navigator.onLine) {
+        indicator.textContent = '在线';
+        indicator.style.color = '#34C759';
+      } else {
+        indicator.textContent = '离线';
+        indicator.style.color = '#FF3B30';
+      }
+    }
+    
+    // 检查Service Worker
+    function checkServiceWorker() {
+      const statusEl = document.getElementById('sw-status');
+      
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistration().then(registration => {
+          if (registration) {
+            statusEl.innerHTML = `<span class="status success">✅ 已注册</span><br>
+              作用域: ${registration.scope}<br>
+              状态: ${registration.active ? '激活' : '未激活'}`;
+          } else {
+            statusEl.innerHTML = `<span class="status warning">⚠️ 未注册</span>`;
+          }
+        });
+      } else {
+        statusEl.innerHTML = `<span class="status error">❌ 不支持</span>`;
+      }
+    }
+    
+    // 检查Manifest
+    async function checkManifest() {
+      const statusEl = document.getElementById('manifest-status');
+      
+      try {
+        const response = await fetch('/manifest.json');
+        if (response.ok) {
+          const manifest = await response.json();
+          statusEl.innerHTML = `<span class="status success">✅ 已加载</span><br>
+            应用名称: ${manifest.name}<br>
+            显示模式: ${manifest.display}<br>
+            图标数量: ${manifest.icons.length}`;
+        } else {
+          statusEl.innerHTML = `<span class="status error">❌ 加载失败</span>`;
+        }
+      } catch (error) {
+        statusEl.innerHTML = `<span class="status error">❌ 错误: ${error.message}</span>`;
+      }
+    }
+    
+    // 检查缓存
+    async function checkCache() {
+      const statusEl = document.getElementById('cache-status');
+      
+      if ('caches' in window) {
+        try {
+          const cacheNames = await caches.keys();
+          let totalSize = 0;
+          let totalFiles = 0;
+          
+          for (const cacheName of cacheNames) {
+            const cache = await caches.open(cacheName);
+            const keys = await cache.keys();
+            totalFiles += keys.length;
+          }
+          
+          statusEl.innerHTML = `<span class="status success">✅ 可用</span><br>
+            缓存数量: ${cacheNames.length}<br>
+            缓存文件: ${totalFiles} 个<br>
+            缓存名称: ${cacheNames.join(', ')}`;
+        } catch (error) {
+          statusEl.innerHTML = `<span class="status error">❌ 错误: ${error.message}</span>`;
+        }
+      } else {
+        statusEl.innerHTML = `<span class="status error">❌ 不支持缓存API</span>`;
+      }
+    }
+    
+    // 清除缓存
+    async function clearCache() {
+      if ('caches' in window) {
+        const cacheNames = await caches.keys();
+        await Promise.all(cacheNames.map(name => caches.delete(name)));
+        alert('缓存已清除');
+        checkCache();
+      }
+    }
+    
+    // 测试离线功能
+    function testOffline() {
+      const statusEl = document.getElementById('offline-status');
+      statusEl.innerHTML += '<br>正在测试离线功能...';
+      
+      // 尝试加载一个资源
+      fetch('/styles.css', { cache: 'no-cache' })
+        .then(response => {
+          if (response.ok) {
+            statusEl.innerHTML += '<br><span class="status success">✅ 资源加载成功</span>';
+          } else {
+            statusEl.innerHTML += '<br><span class="status warning">⚠️ 资源加载失败，但可能来自缓存</span>';
+          }
+        })
+        .catch(error => {
+          statusEl.innerHTML += '<br><span class="status error">❌ 网络错误，测试离线缓存</span>';
+        });
+    }
+    
+    // 触发安装
+    function triggerInstall() {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then((choiceResult) => {
+          if (choiceResult.outcome === 'accepted') {
+            document.getElementById('install-status').innerHTML = 
+              '<span class="status success">✅ 用户接受安装</span>';
+          } else {
+            document.getElementById('install-status').innerHTML = 
+              '<span class="status warning">⚠️ 用户拒绝安装</span>';
+          }
+          deferredPrompt = null;
+        });
+      }
+    }
+    
+    // 监听安装提示事件
+    window.addEventListener('beforeinstallprompt', (e) => {
+      console.log('PWA: beforeinstallprompt 事件触发');
+      e.preventDefault();
+      deferredPrompt = e;
+      document.getElementById('install-status').innerHTML =
+        '<span class="status success">✅ 可以安装</span>';
+      document.getElementById('install-btn').disabled = false;
+    });
+
+    // 检查PWA安装条件
+    function checkPWAInstallability() {
+      const checks = [
+        {
+          name: 'HTTPS或localhost',
+          test: () => location.protocol === 'https:' || location.hostname === 'localhost'
+        },
+        {
+          name: 'Service Worker注册',
+          test: () => 'serviceWorker' in navigator
+        },
+        {
+          name: 'Manifest文件',
+          test: () => document.querySelector('link[rel="manifest"]') !== null
+        },
+        {
+          name: '显示模式standalone',
+          test: async () => {
+            try {
+              const response = await fetch('/manifest.json');
+              const manifest = await response.json();
+              return manifest.display === 'standalone';
+            } catch {
+              return false;
+            }
+          }
+        }
+      ];
+
+      console.log('PWA: 检查安装条件...');
+      checks.forEach(async check => {
+        const result = typeof check.test === 'function' ? await check.test() : check.test;
+        console.log(`PWA: ${check.name}: ${result ? '✅' : '❌'}`);
+      });
+    }
+    
+    // 监听安装完成事件
+    window.addEventListener('appinstalled', (evt) => {
+      document.getElementById('install-status').innerHTML = 
+        '<span class="status success">✅ 已安装</span>';
+    });
+    
+    // 监听在线状态变化
+    window.addEventListener('online', updateOnlineStatus);
+    window.addEventListener('offline', updateOnlineStatus);
+    
+    // 初始化
+    document.addEventListener('DOMContentLoaded', () => {
+      updateOnlineStatus();
+      checkServiceWorker();
+      checkManifest();
+      checkCache();
+      checkPWAInstallability();
+
+      // 检查是否已经安装
+      if (window.matchMedia('(display-mode: standalone)').matches) {
+        document.getElementById('install-status').innerHTML =
+          '<span class="status success">✅ 已安装（独立模式）</span>';
+      } else {
+        // 延迟检查安装提示
+        setTimeout(() => {
+          if (!deferredPrompt) {
+            document.getElementById('install-status').innerHTML =
+              '<span class="status warning">⚠️ 安装提示未出现，可能需要满足更多条件</span>';
+          }
+        }, 3000);
+      }
+    });
+  </script>
+</body>
+</html>

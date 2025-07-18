@@ -1,0 +1,30 @@
+name = "otis-assistant-pwa"
+compatibility_date = "2025-07-18"
+
+# 静态资源配置
+[assets]
+directory = "."
+exclude = [
+  "node_modules/**",
+  ".git/**",
+  "*.md",
+  "*.log",
+  "package*.json",
+  "wrangler.toml",
+  "local-test.js",
+  "start-dev.js",
+  "fix-issues.js",
+  "generate-icons.js",
+  "kill-port.js",
+  "pwa-test.html",
+  "mobile-test.html",
+  "LOCAL_TEST.md",
+  ".env*",
+  "*.config.js",
+  ".vscode/**",
+  "test-functions.js"
+]
+
+# 构建配置（可选）
+[build]
+command = ""

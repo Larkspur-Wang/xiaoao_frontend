@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  
+  <!-- 性能优化 -->
+  <meta name="description" content="OTIS电梯助手小奥 - 专业的电梯智能助手，提供实时咨询和服务">
+  <meta name="keywords" content="OTIS,电梯,智能助手,PWA,移动端">
+  
+  <!-- 预加载关键资源 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="dns-prefetch" href="http://47.117.87.105">
+  <title>OTIS电梯助手小奥</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1e88e5">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="小奥助手">
+  <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+  
+  <!-- PWA图标 -->
+  <link rel="icon" type="image/png" sizes="72x72" href="icons/icon-72x72.png">
+  <link rel="icon" type="image/png" sizes="96x96" href="icons/icon-96x96.png">
+  <link rel="icon" type="image/png" sizes="128x128" href="icons/icon-128x128.png">
+  <link rel="icon" type="image/png" sizes="144x144" href="icons/icon-144x144.png">
+  <link rel="icon" type="image/png" sizes="152x152" href="icons/icon-152x152.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192x192.png">
+  <link rel="icon" type="image/png" sizes="384x384" href="icons/icon-384x384.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512x512.png">
+  
+  <!-- 预加载关键资源 -->
+  <link rel="preload" href="styles.css" as="style">
+  <link rel="preload" href="app.js" as="script">
+  
+  <!-- 添加Google字体 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- 添加Material Icons -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+</head>
+<body>
+  <div class="app-container">
+    <!-- 登录页面 -->
+    <div id="login-page" class="page active">
+      <div class="login-container">
+        <div class="login-card">
+          <img src="icons/icon-192x192.png" alt="OTIS Logo" class="login-logo">
+          <h1 class="login-title">OTIS电梯助手小奥</h1>
+          <p class="login-subtitle">专业的电梯智能助手，为您提供贴心服务</p>
+          
+          <div class="form-group">
+            <label class="form-label" for="user-id">选择您的身份</label>
+            <select id="user-id" class="form-control">
+              <option value="">请选择身份</option>
+              <option value="admin_001">🔧 系统管理员</option>
+              <option value="vip_001">⭐ VIP用户</option>
+              <option value="maintenance_001">🛠️ 维保人员</option>
+              <option value="property_001">🏢 物业人员</option>
+              <option value="user_001">👤 普通用户</option>
+            </select>
+          </div>
+          
+          <button id="login-btn" class="btn btn-primary">
+            <span class="material-icons">login</span>
+            立即登录
+          </button>
+          <div id="login-status" class="status-message hidden"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 主页面 -->
+    <div id="main-page" class="page">
+      <header class="app-header">
+        <div class="header-title">小奥助手</div>
+        <div class="user-info">
+          <div class="user-avatar" id="user-avatar"></div>
+          <span id="user-name"></span>
+          <button id="logout-btn" class="btn btn-small btn-secondary">
+            <span class="material-icons">logout</span>
+          </button>
+        </div>
+      </header>
+
+      <div class="main-content">
+        <!-- 会话管理 -->
+        <div class="sessions-panel" id="sessions-panel">
+          <div class="panel-header">
+            <h2 class="panel-title">会话列表</h2>
+            <button id="new-session-btn" class="btn btn-primary btn-small">
+              <span class="material-icons">add</span>
+              新建
+            </button>
+          </div>
+
+          <!-- 搜索框 -->
+          <div class="search-container">
+            <div class="search-input-wrapper">
+              <span class="material-icons search-icon">search</span>
+              <input type="text" id="session-search" class="search-input" placeholder="搜索会话...">
+              <button id="clear-search" class="clear-search-btn hidden">
+                <span class="material-icons">clear</span>
+              </button>
+            </div>
+          </div>
+
+          <div id="sessions-list" class="sessions-list">
+            <div class="empty-state">
+              <div class="empty-state-icon material-icons">chat</div>
+              <div class="empty-state-title">暂无会话</div>
+              <div class="empty-state-subtitle">点击右上角按钮创建新会话</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 聊天区域 -->
+        <div class="chat-panel" id="chat-panel">
+          <div id="no-session-message" class="no-session-message">
+            <div class="no-session-icon material-icons">chat_bubble_outline</div>
+            <div class="no-session-title">开始对话</div>
+            <div class="no-session-subtitle">选择一个会话或创建新会话开始聊天</div>
+          </div>
+          
+          <div id="chat-container" class="chat-container hidden">
+            <div class="chat-header">
+              <div class="chat-header-left">
+                <div class="chat-avatar">
+                  <span class="material-icons">smart_toy</span>
+                </div>
+                <div>
+                  <div class="chat-title" id="current-session-title">小奥助手</div>
+                  <div class="chat-subtitle">在线为您服务</div>
+                </div>
+              </div>
+              <div class="chat-actions">
+                <button id="back-btn" class="btn btn-small btn-secondary hidden">
+                  <span class="material-icons">arrow_back</span>
+                </button>
+              </div>
+            </div>
+            
+            <div id="messages-container" class="messages-container">
+              <!-- 消息将在这里动态生成 -->
+            </div>
+            
+            <div class="message-input-container">
+              <div class="message-input-wrapper">
+                <textarea 
+                  id="message-input" 
+                  placeholder="输入消息..." 
+                  class="message-input"
+                  rows="1"
+                ></textarea>
+              </div>
+              <div class="input-actions">
+                <button id="send-message-btn" class="input-action">
+                  <span class="material-icons">send</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 移动端底部导航 -->
+    <nav class="bottom-nav">
+      <div class="bottom-nav-items">
+        <a href="#" class="bottom-nav-item active" id="nav-sessions">
+          <span class="material-icons bottom-nav-icon">chat</span>
+          <span>会话</span>
+        </a>
+        <a href="#" class="bottom-nav-item" id="nav-new-session">
+          <span class="material-icons bottom-nav-icon">add_circle</span>
+          <span>新建</span>
+        </a>
+        <a href="#" class="bottom-nav-item" id="nav-profile">
+          <span class="material-icons bottom-nav-icon">person</span>
+          <span>我的</span>
+        </a>
+      </div>
+    </nav>
+  </div>
+
+  <script src="api-client.js"></script>
+  <script src="chat-history.js"></script>
+  <script src="app.js"></script>
+
+  <!-- 开发环境测试脚本 -->
+  <script>
+    if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
+      const testScript = document.createElement('script');
+      testScript.src = 'test-functions.js';
+      document.head.appendChild(testScript);
+    }
+  </script>
+</body>
+</html>

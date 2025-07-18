@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /
+
+# PWA相关文件
+Allow: /manifest.json
+Allow: /sw.js
+Allow: /icons/
+
+# 禁止爬虫访问API
+Disallow: /api/
+
+# 站点地图
+Sitemap: https://your-domain.com/sitemap.xml
