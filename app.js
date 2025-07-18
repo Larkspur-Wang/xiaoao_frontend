@@ -15,8 +15,13 @@ document.addEventListener('DOMContentLoaded', () => {
   // 初始化API客户端
   const apiClient = new OTISAPIClient();
   
-  // 配置API地址 - 使用文档中的实际服务器地址
-  apiClient.setBaseURL('http://47.117.87.105:8080/api/v1');
+  // 配置API地址 - 根据环境选择
+  const isProduction = window.location.protocol === 'https:';
+  const apiBaseURL = isProduction
+    ? '/api'  // 生产环境使用Cloudflare Functions代理
+    : 'http://47.117.87.105:8080/api/v1';   // 本地开发直接访问
+
+  apiClient.setBaseURL(apiBaseURL);
   
   // 当前会话ID
   let currentSessionId = null;

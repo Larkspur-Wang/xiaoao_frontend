@@ -60,10 +60,20 @@ self.addEventListener('activate', event => {
 // 网络优先策略
 const networkFirst = async (request) => {
   try {
+    // 检查请求协议，避免缓存chrome-extension等不支持的协议
+    if (!request.url.startsWith('http://') && !request.url.startsWith('https://')) {
+      return fetch(request);
+    }
+
     const networkResponse = await fetch(request);
     if (networkResponse.ok) {
       const cache = await caches.open(DYNAMIC_CACHE_NAME);
-      cache.put(request, networkResponse.clone());
+      // 使用try-catch包装cache.put，避免协议错误
+      try {
+        cache.put(request, networkResponse.clone());
+      } catch (cacheError) {
+        console.warn('缓存失败:', cacheError);
+      }
     }
     return networkResponse;
   } catch (error) {

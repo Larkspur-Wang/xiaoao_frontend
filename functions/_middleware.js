@@ -4,6 +4,19 @@
 export async function onRequest(context) {
   const { request, next } = context;
   const url = new URL(request.url);
+
+  // 处理CORS预检请求
+  if (request.method === 'OPTIONS') {
+    return new Response(null, {
+      status: 200,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+        'Access-Control-Max-Age': '86400'
+      }
+    });
+  }
   
   // 处理Service Worker请求
   if (url.pathname === '/sw.js') {
@@ -40,11 +53,52 @@ export async function onRequest(context) {
     return newResponse;
   }
   
-  // 处理API代理（如果需要）
+  // 处理API代理 - 解决HTTPS混合内容问题
   if (url.pathname.startsWith('/api/')) {
-    // 这里可以添加API代理逻辑
-    // 目前直接返回404，因为我们使用外部API
-    return new Response('API endpoint not found', { status: 404 });
+    const apiPath = url.pathname.replace('/api', '');
+    const targetUrl = `http://47.117.87.105:8080/api/v1${apiPath}`;
+
+    try {
+      // 创建新的请求，复制原始请求的方法、头部和body
+      const proxyRequest = new Request(targetUrl, {
+        method: request.method,
+        headers: {
+          ...Object.fromEntries(request.headers.entries()),
+          'Origin': 'https://xiaoao-frontend.pages.dev',
+          'Referer': 'https://xiaoao-frontend.pages.dev/'
+        },
+        body: request.method !== 'GET' && request.method !== 'HEAD' ? request.body : undefined
+      });
+
+      // 发送代理请求
+      const response = await fetch(proxyRequest);
+
+      // 创建响应，添加CORS头
+      const proxyResponse = new Response(response.body, {
+        status: response.status,
+        statusText: response.statusText,
+        headers: {
+          ...Object.fromEntries(response.headers.entries()),
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With'
+        }
+      });
+
+      return proxyResponse;
+    } catch (error) {
+      console.error('API代理错误:', error);
+      return new Response(JSON.stringify({
+        error: 'API代理失败',
+        message: error.message
+      }), {
+        status: 500,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        }
+      });
+    }
   }
   
   // 其他请求正常处理
