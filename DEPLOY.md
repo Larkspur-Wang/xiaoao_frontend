@@ -2,20 +2,28 @@
 
 ## 🚨 部署错误修复
 
-**错误**: `Missing entry-point to Worker script or to assets directory`
-
+### 错误1: `Missing entry-point to Worker script`
 **原因**: Wrangler需要明确指定静态资源目录
+**解决方案**: 使用Pages专用命令
 
-**解决方案**: 使用以下任一命令部署：
+### 错误2: `A request to the Cloudflare API (/workers/scripts/...) failed`
+**原因**: Wrangler尝试部署为Workers而不是Pages
+**解决方案**: 使用正确的Pages部署命令
+
+## ✅ 正确的部署命令
+
 ```bash
-# 方式1: 指定静态资源目录
-npx wrangler deploy --assets=.
+# 推荐方式1: 使用npm脚本
+npm run deploy
 
-# 方式2: 使用Pages专用命令
+# 推荐方式2: 直接使用Pages命令
 npx wrangler pages deploy .
 
-# 方式3: 使用npm脚本
-npm run deploy
+# 推荐方式3: 指定项目名称
+npx wrangler pages deploy . --project-name=otis-assistant-pwa
+
+# ❌ 错误方式（不要使用）
+# npx wrangler deploy --assets=.  # 这会尝试部署为Workers
 ```
 
 ## 快速部署到Cloudflare Pages

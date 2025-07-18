@@ -15,8 +15,10 @@
     "optimize": "npm run minify-css && npm run minify-js",
     "minify-css": "npx cleancss -o styles.min.css styles.css",
     "minify-js": "npx terser app.js chat-history.js test-functions.js -o app.min.js -c -m",
-    "deploy": "wrangler deploy --assets=.",
+    "deploy": "node deploy.js",
     "deploy-pages": "wrangler pages deploy .",
+    "deploy-direct": "wrangler pages deploy . --project-name=otis-assistant-pwa",
+    "deploy-check": "node deploy.js --check",
     "preview": "wrangler pages dev .",
     "test": "npm run dev",
     "start": "npm run dev"
