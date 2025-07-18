@@ -1,8 +1,18 @@
 class OTISAPIClient {
-  constructor(baseURL = 'http://47.117.87.105:8080/api/v1') {
+  constructor(baseURL = null) {
+    // 根据环境自动选择API地址
+    if (!baseURL) {
+      const isProduction = window.location.protocol === 'https:';
+      baseURL = isProduction
+        ? '/api'  // 生产环境使用代理
+        : 'http://47.117.87.105:8080/api/v1';  // 本地开发
+    }
+
     this.baseURL = baseURL;
     this.token = localStorage.getItem('otis_token') || null;
     this.user = JSON.parse(localStorage.getItem('otis_user') || 'null');
+
+    console.log('API客户端初始化，baseURL:', this.baseURL);
   }
 
   // 设置API基础URL
