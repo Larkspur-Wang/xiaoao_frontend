@@ -55,30 +55,62 @@ export async function onRequest(context) {
   
   // 处理API代理 - 解决HTTPS混合内容问题
   if (url.pathname.startsWith('/api/')) {
+    // 处理预检请求
+    if (request.method === 'OPTIONS') {
+      return new Response(null, {
+        status: 200,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+          'Access-Control-Max-Age': '86400'
+        }
+      });
+    }
+
     const apiPath = url.pathname.replace('/api', '');
     const targetUrl = `http://47.117.87.105:8080/api/v1${apiPath}`;
 
     try {
       // 创建新的请求，复制原始请求的方法、头部和body
+      const cleanHeaders = {};
+      for (const [key, value] of request.headers.entries()) {
+        // 过滤掉可能导致问题的头部
+        if (!key.toLowerCase().startsWith('cf-') &&
+            !key.toLowerCase().startsWith('x-forwarded-') &&
+            key.toLowerCase() !== 'host') {
+          cleanHeaders[key] = value;
+        }
+      }
+
       const proxyRequest = new Request(targetUrl, {
         method: request.method,
         headers: {
-          ...Object.fromEntries(request.headers.entries()),
-          'Origin': 'https://xiaoao-frontend.pages.dev',
-          'Referer': 'https://xiaoao-frontend.pages.dev/'
+          ...cleanHeaders,
+          'Host': '47.117.87.105:8080',
+          'User-Agent': 'OTIS-Assistant-PWA/1.0',
+          'Accept': 'application/json',
+          'Content-Type': request.headers.get('content-type') || 'application/json'
         },
         body: request.method !== 'GET' && request.method !== 'HEAD' ? request.body : undefined
       });
 
       // 发送代理请求
+      console.log('代理请求到:', targetUrl);
       const response = await fetch(proxyRequest);
+      console.log('API响应状态:', response.status);
 
       // 创建响应，添加CORS头
+      const responseHeaders = {};
+      for (const [key, value] of response.headers.entries()) {
+        responseHeaders[key] = value;
+      }
+
       const proxyResponse = new Response(response.body, {
         status: response.status,
         statusText: response.statusText,
         headers: {
-          ...Object.fromEntries(response.headers.entries()),
+          ...responseHeaders,
           'Access-Control-Allow-Origin': '*',
           'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
           'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With'
