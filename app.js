@@ -502,7 +502,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const textDiv = document.createElement('div');
     textDiv.className = 'message-text';
-    textDiv.textContent = content;
+    let displayContent = content;
+
+    // 如果是助手消息，并且存在工具调用，尝试从内容中剥离工具调用字符串
+    if (role === 'assistant' && messageData && messageData.tool_calls && messageData.tool_calls.length > 0) {
+      let tempContent = content;
+      // 遍历所有工具调用，尝试从内容中移除它们对应的字符串表示
+      messageData.tool_calls.forEach(toolCall => {
+        // 构建一个可能匹配的工具调用字符串模式
+        // 这是一个比较宽松的匹配模式，用于捕获可能的工具调用字符串
+        const toolCallRegex = new RegExp(`name":\\s*"${toolCall.tool_name}",\\s*"arguments":\\s*[{][^}]*[}]`, 'g');
+        tempContent = tempContent.replace(toolCallRegex, '').trim();
+      });
+      // 如果剥离后内容为空或者只剩下少量非信息性字符，则认为内容主要就是工具调用，不显示文本内容
+      if (tempContent.length < 5 && messageData.tool_calls.length > 0) { // 阈值5可以根据实际情况调整
+          displayContent = ''; // 不显示文本内容
+      } else {
+          displayContent = tempContent; // 显示剥离后的内容
+      }
+    }
+
+    textDiv.textContent = displayContent;
 
     const timeDiv = document.createElement('div');
     timeDiv.className = 'message-time';
@@ -857,5 +877,3 @@ document.addEventListener('DOMContentLoaded', () => {
   checkAuth();
   handleMobileKeyboard();
 });
-
-
